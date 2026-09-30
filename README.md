@@ -9,7 +9,7 @@
 ![AI Powered](https://img.shields.io/badge/AI-Groq%20%7C%20Gemini-10B981?style=for-the-badge&logo=openai&logoColor=white)
 
 **Application Web Progressive (PWA) de Gestion de Maintenance Assistée par Ordinateur (GMAO)**  
-*Centralisation, pilotage et traçabilité des interventions, maintenances préventives, dépannages et installations d'équipements industriels et frigorifiques entre **Soutarah Group** et ses clients partenaires (Orange CI, etc.).*
+*Centralisation, pilotage et traçabilité des interventions, maintenances préventives, dépannages et installations d'équipements industriels et frigorifiques entre **Soutarah Group** et ses clients partenaires *
 
 </div>
 
