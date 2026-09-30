@@ -1,0 +1,178 @@
+@startuml Module1_Referentiel_Equipements
+!theme plain
+hide circle
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam roundCorner 0
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam nodesep 80
+skinparam ranksep 60
+skinparam linetype ortho
+
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    BorderThickness 1
+    FontName Arial
+    FontSize 11
+    FontStyle bold
+    AttributeFontName Arial
+    AttributeFontSize 10
+    AttributeFontStyle plain
+}
+
+skinparam ArrowColor #000000
+skinparam ArrowThickness 1
+skinparam ArrowFontName Arial
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #000000
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 1 : Client & BaseSite
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Client {
+    +id : int
+    +code : string
+    +nom : string
+    +telephone : string
+    +mail : string
+    +adresse : string
+    +ville : string
+    +pays : string
+    --
+    +creerBase() : void
+    +creerSite() : void
+    +listerEquipements() : array
+}
+
+class BaseSite {
+    +id : int
+    +nom_base : string
+    +code_base : string
+    --
+    +ajouterSite() : void
+    +listerSites() : array
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 2 : Site & ZoneSite
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Site {
+    +id : int
+    +nom_site : string
+    +code_site : string
+    +adresse : string
+    +ville : string
+    +telephone : string
+    +observations : text
+    --
+    +ajouterZone() : void
+    +ajouterEquipement() : void
+}
+
+class ZoneSite {
+    +id : int
+    +nom_zone : string
+    +code_zone : string
+    +observations : text
+    +est_vip : boolean
+    --
+    +affecterEquipement() : void
+    +estZoneVip() : boolean
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 3 : Equipement & FicheFroid
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Equipement {
+    +id : int
+    +equipement_code : string
+    +equipement_numero : string
+    +equipement_nom : string
+    +marque : string
+    +type : string
+    +emplacement : string
+    +reference : string
+    +puissance : string
+    +refrigerant : string
+    +mois_installation : string
+    +annee_installation : int
+    +etat : string
+    --
+    +mettreAJourEtat() : void
+    +consulterHistorique() : array
+}
+
+class FicheFroid {
+    +id : int
+    +freon : string
+    +etat_filtres : string
+    +dismatic : string
+    +dpn : string
+    +support : string
+    +test : string
+    +etat_general : string
+    +observations : text
+    +date_saisie : datetime
+    --
+    +enregistrerFiche() : void
+    +genererRapport() : void
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 4 : Installation
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Installation {
+    +id : int
+    +type_equipement : string
+    +marque : string
+    +modele : string
+    +numero_serie : string
+    +code_identification : string
+    +date_prevue : datetime
+    +date_installation : datetime
+    +remarque : text
+    +statut : string
+    +rapport : text
+    +approuve_client : boolean
+    --
+    +planifierInstallation() : void
+    +validerInstallation() : void
+    +genererPVReception() : void
+}
+
+' ─────────────────────────────────────────────────────────────────────────────
+' DISPOSITION 2 PAR 2 ALIGNÉE
+' ─────────────────────────────────────────────────────────────────────────────
+Client -[hidden]right- BaseSite
+Site -[hidden]right- ZoneSite
+Equipement -[hidden]right- FicheFroid
+
+Client -[hidden]down- Site
+BaseSite -[hidden]down- ZoneSite
+Site -[hidden]down- Equipement
+ZoneSite -[hidden]down- FicheFroid
+Equipement -[hidden]down- Installation
+
+' ─────────────────────────────────────────────────────────────────────────────
+' ASSOCIATIONS MÉTIER CLAIRES
+' ─────────────────────────────────────────────────────────────────────────────
+Client "1" -right- "0..*" BaseSite : posséder >
+Client "1" -down- "0..*" Site : posséder directement >
+BaseSite "0..1" -down- "0..*" Site : regrouper >
+
+Site "1" -right- "0..*" ZoneSite : subdiviser en >
+Site "1" -down- "0..*" Equipement : héberger >
+ZoneSite "0..1" -down- "0..*" Equipement : localiser >
+
+Equipement "1" -right- "0..*" FicheFroid : faire l'objet de >
+Equipement "1" -down- "0..1" Installation : être installé par >
+
+@enduml

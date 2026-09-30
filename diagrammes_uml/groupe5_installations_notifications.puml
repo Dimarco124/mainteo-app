@@ -1,0 +1,129 @@
+@startuml Groupe5_Installations_Notifications
+!theme plain
+hide circle
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam roundCorner 0
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam nodesep 80
+skinparam ranksep 60
+skinparam linetype ortho
+
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    BorderThickness 1
+    FontName Arial
+    FontSize 11
+    FontStyle bold
+    AttributeFontName Arial
+    AttributeFontSize 10
+    AttributeFontStyle plain
+}
+
+skinparam ArrowColor #000000
+skinparam ArrowThickness 1
+skinparam ArrowFontName Arial
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #000000
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 1 : Installation & Notification
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Installation {
+    +id : int
+    +client_id : int
+    +client_nom : string
+    +base_nom : string
+    +site_nom : string
+    +type_equipement : string
+    +marque : string
+    +modele : string
+    +numero_serie : string
+    +code_identification : string
+    +date_prevue : datetime
+    +date_installation : datetime
+    +technicien_id : int
+    +remarque : text
+    +statut : string
+    +rapport : text
+    +approuve_client : boolean
+    --
+    +planifierInstallation() : void
+    +validerInstallation() : void
+    +genererPVReception() : void
+}
+
+class InterventionNotification {
+    +id : int
+    +user_id : int
+    +intervention_id : int
+    +demande_id : int
+    +maintenance_id : int
+    +type : string
+    +message : text
+    +statut : string
+    +created_at : datetime
+    --
+    +envoyerNotification() : void
+    +marquerCommeLu() : void
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 2 : Référentiels Cibles
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Client {
+    +id : int
+    +nom : string
+    --
+}
+
+class User {
+    +id : int
+    +nom : string
+    --
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 3 : Entités sources d'alertes
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Demande {
+    +id : int
+    +numero_demande : string
+    --
+}
+
+class Depannage {
+    +id : int
+    --
+}
+
+' ─────────────────────────────────────────────────────────────────────────────
+' DISPOSITION 2 PAR 2 ALIGNÉE
+' ─────────────────────────────────────────────────────────────────────────────
+Installation -[hidden]right- InterventionNotification
+Client -[hidden]right- User
+Demande -[hidden]right- Depannage
+
+Installation -[hidden]down- Client
+InterventionNotification -[hidden]down- User
+Client -[hidden]down- Demande
+User -[hidden]down- Depannage
+
+' ─────────────────────────────────────────────────────────────────────────────
+' ASSOCIATIONS DIRECTES SANS CROISEMENTS
+' ─────────────────────────────────────────────────────────────────────────────
+Installation "0..*" -down- "1" Client : concerner >
+Installation "0..*" -right- "0..1" User : réaliser par >
+
+InterventionNotification "0..*" -down- "1" User : adresser à >
+InterventionNotification "0..*" -down- "0..1" Demande : notifier >
+InterventionNotification "0..*" -down- "0..1" Depannage : notifier >
+
+@enduml

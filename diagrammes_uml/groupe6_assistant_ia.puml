@@ -1,0 +1,116 @@
+@startuml Groupe6_Assistant_IA_Decision
+!theme plain
+hide circle
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam roundCorner 0
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam nodesep 80
+skinparam ranksep 60
+skinparam linetype ortho
+
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    BorderThickness 1
+    FontName Arial
+    FontSize 11
+    FontStyle bold
+    AttributeFontName Arial
+    AttributeFontSize 10
+    AttributeFontStyle plain
+}
+
+skinparam ArrowColor #000000
+skinparam ArrowThickness 1
+skinparam ArrowFontName Arial
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #000000
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 1 : L'Utilisateur Connecté (Table utilisateurs)
+' ═════════════════════════════════════════════════════════════════════════════
+
+class User {
+    +id : int
+    +nom : string
+    +prenom : string
+    +email : string
+    +type_utilisateur : string
+    +telephone : string
+    --
+    +isAdmin() : boolean
+    +isSuperviseurClient() : boolean
+    +isTechnicien() : boolean
+    +isDemandeur() : boolean
+    +getNomComplet() : string
+    +consulterHistoriqueIA() : array
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 2 : La Table des Conversations (Table ai_conversations)
+' ═════════════════════════════════════════════════════════════════════════════
+
+class AiConversation {
+    +id : int
+    +user_id : int
+    +titre : string
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +recupererMessages() : array
+    +recupererDernierMessage() : AiMessage
+    +renommerDiscussion(titre : string) : void
+    +supprimerDiscussion() : boolean
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 3 : La Table des Messages (Table ai_messages) & Énumération des Rôles
+' ═════════════════════════════════════════════════════════════════════════════
+
+class AiMessage {
+    +id : int
+    +conversation_id : int
+    +user_id : int
+    +role : RoleMessage
+    +content : text
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +estMessageUtilisateur() : boolean
+    +estReponseAssistant() : boolean
+}
+
+class "«enumeration»\nRoleMessage" as RoleMessage {
+    user
+    assistant
+    system
+}
+
+' ─────────────────────────────────────────────────────────────────────────────
+' DISPOSITION VISUELLE CENTRÉE ET LISIBLE
+' ─────────────────────────────────────────────────────────────────────────────
+User -[hidden]down- AiConversation
+AiConversation -[hidden]down- AiMessage
+AiMessage -[hidden]right- RoleMessage
+
+' ─────────────────────────────────────────────────────────────────────────────
+' ASSOCIATIONS MÉTIER CLAIRES (EXACTEMENT COMME MODULES 1, 2 ET 3)
+' ─────────────────────────────────────────────────────────────────────────────
+
+' 1. Un utilisateur initie zéro ou plusieurs conversations
+User "1" -- "0..*" AiConversation : initier >
+
+' 2. Une conversation contient un ou plusieurs messages
+AiConversation "1" -- "1..*" AiMessage : contenir >
+
+' 3. Un utilisateur expédie zéro ou plusieurs messages
+User "1" -- "0..*" AiMessage : expédier >
+
+' 4. Chaque message possède un rôle précis
+AiMessage .. RoleMessage : typer par >
+
+@enduml

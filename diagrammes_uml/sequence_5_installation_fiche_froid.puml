@@ -1,0 +1,85 @@
+@startuml Sequence_Installation_Fiche_Froid
+!theme plain
+autonumber "<b>[00]</b>"
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam ParticipantBorderThickness 1
+skinparam LifeLineBorderThickness 1
+skinparam ArrowThickness 1
+skinparam SequenceLifeLineBorderColor #000000
+skinparam SequenceLifeLineBackgroundColor #F5F5F5
+skinparam ParticipantBorderColor #000000
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ActorBorderColor #000000
+skinparam ActorBackgroundColor #FFFFFF
+skinparam BoxBorderThickness 1
+skinparam BoxBorderColor #666666
+
+title DIAGRAMME DE SÉQUENCE : RÉFÉRENCEMENT D'UN ÉQUIPEMENT ET SA FICHE FROID
+
+actor "Superviseur Client\n/ Admin" as User
+participant "Interface Web\n(equipements.create)" as UI
+participant "EquipementController" as EquipCtrl
+participant "FicheFroidController" as FroidCtrl
+participant "Modèle Equipement\n(Eloquent)" as EquipModel
+participant "Modèle FicheFroid\n(Eloquent)" as FroidModel
+database "Base de Données\n(MySQL)" as DB
+
+User -> UI : 1. Sélectionne Client, Base, Site et Zone
+activate UI
+
+UI -> EquipCtrl : 2. GET /api/sites/{site}/zones (chargement dynamique)
+activate EquipCtrl
+EquipCtrl -> DB : 3. SELECT * FROM zones_sites WHERE site_id=?
+activate DB
+DB --> EquipCtrl : 4. Liste des emplacements
+deactivate DB
+EquipCtrl --> UI : 5. Données JSON des zones
+deactivate EquipCtrl
+
+UI --> User : 6. Affiche la liste filtrée des zones
+
+User -> UI : 7. Saisit nom, marque, n° série, fluide (R404A, R134a...), charge (kg)
+User -> UI : 8. Clique sur "Créer l'équipement & la fiche fluide"
+
+UI -> EquipCtrl : 9. POST /equipements (données équipement + données froid)
+activate EquipCtrl
+
+EquipCtrl -> EquipCtrl : 10. Valide données techniques et unicité code équipement
+
+EquipCtrl -> EquipModel : 11. create(site_id, zone_id, code, nom, marque, serie)
+activate EquipModel
+EquipModel -> DB : 12. INSERT INTO equipements (...)
+activate DB
+DB --> EquipModel : 13. ID équipement généré
+deactivate DB
+EquipModel --> EquipCtrl : 14. Instance Equipement créée
+deactivate EquipModel
+
+opt #FFFFFF Données frigorifiques renseignées (Machine thermo-dynamique)
+    EquipCtrl -> FroidCtrl : 15. creerFicheFroid(equipement_id, fluide, charge_kg, detente)
+    activate FroidCtrl
+    
+    FroidCtrl -> FroidModel : 16. create(equipement_id, type_fluide, charge, gwp, tonnage_co2)
+    activate FroidModel
+    FroidModel -> DB : 17. INSERT INTO fiches_froid (...)
+    activate DB
+    DB --> FroidModel : 18. Fiche froid enregistrée
+    deactivate DB
+    FroidModel --> FroidCtrl : 19. Confirmation
+    deactivate FroidModel
+    
+    FroidCtrl --> EquipCtrl : 20. Succès association fiche froid
+    deactivate FroidCtrl
+end
+
+EquipCtrl --> UI : 21. Redirection vers la fiche équipement avec message succès
+deactivate EquipCtrl
+
+UI --> User : 22. Affichage récapitulatif avec badge conformité réglementaire
+deactivate UI
+@enduml

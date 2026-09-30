@@ -1,0 +1,202 @@
+@startuml Module2_Interventions_Depannages
+!theme plain
+hide circle
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam roundCorner 0
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam nodesep 80
+skinparam ranksep 60
+skinparam linetype ortho
+
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    BorderThickness 1
+    FontName Arial
+    FontSize 11
+    FontStyle bold
+    AttributeFontName Arial
+    AttributeFontSize 10
+    AttributeFontStyle plain
+}
+
+skinparam ArrowColor #000000
+skinparam ArrowThickness 1
+skinparam ArrowFontName Arial
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #000000
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 1 : Acteur Principal & Équipement
+' ═════════════════════════════════════════════════════════════════════════════
+
+class User {
+    +id : int
+    +nom : string
+    +prenom : string
+    +email : string
+    -mot_de_passe : string
+    +type_utilisateur : string
+    +statut : string
+    +telephone : string
+    +specialite : string
+    --
+    +seConnecter() : boolean
+    +seDeconnecter() : void
+    +isAdmin() : boolean
+    +isSuperviseurClient() : boolean
+    +isDemandeur() : boolean
+    +isTechnicien() : boolean
+    +isChefTechnicien() : boolean
+    +getNomComplet() : string
+}
+
+class Equipement {
+    +id : int
+    +equipement_code : string
+    +equipement_nom : string
+    +marque : string
+    +type : string
+    +emplacement : string
+    +etat : string
+    --
+    +mettreAJourEtat() : void
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 2 : Demande d'Intervention & Dépannage Curatif
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Demande {
+    +id : int
+    +numero_demande : string
+    +numero_reference_externe : string
+    +type_intervention : string
+    +description : text
+    +niveau_urgence : string
+    +date_debut_souhaitee : date
+    +photo_panne : string
+    +statut : string
+    +est_vip : boolean
+    +date_validation_client : datetime
+    +date_validation_soutarah : datetime
+    +date_confirmee_avec_demandeur : date
+    +date_cloture_finale : datetime
+    --
+    +creerDemande() : void
+    +validerParClient() : void
+    +validerParSoutarah() : void
+    +rejeterDemande() : void
+    +confirmerRendezVous() : void
+    +cloturer() : void
+}
+
+class Depannage {
+    +id : int
+    +type_intervention : string
+    +urgence : string
+    +statut : string
+    +date_prevue : datetime
+    +date_realisation : datetime
+    +rapport_technique : text
+    +photos_rapport : json
+    +ri_soutarah : string
+    +approuve_client : boolean
+    +date_rapport_technicien : datetime
+    +date_validation_finale_client : datetime
+    --
+    +affecterTechnicien() : void
+    +affecterEquipe() : void
+    +soumettreRapport() : void
+    +validerRapport() : void
+    +signerAttestationClient() : void
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 3 : Équipe Technique & Planification
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Equipe {
+    +id : int
+    +nom_equipe : string
+    +chef_equipe : int
+    --
+    +ajouterMembre() : void
+    +retirerMembre() : void
+    +designationChef() : void
+}
+
+class Planification {
+    +id : int
+    +site_code : string
+    +date_debut : datetime
+    +date_fin : datetime
+    +statut : string
+    +commentaire : text
+    --
+    +planifierIntervention() : void
+    +modifierDate() : void
+    +annulerPlanification() : void
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 4 : Énumérations Métier
+' ═════════════════════════════════════════════════════════════════════════════
+
+class "«enumeration»\nStatutDemande" as StatutDemande {
+    PENDING_CLIENT_VALIDATION
+    VALIDATED_BY_CLIENT
+    REJECTED_BY_CLIENT
+    NEEDS_TECHNICAL_OPERATION
+    REJECTED_BY_SOUTARAH
+    CONFIRMED_BY_DEMANDEUR
+    CLOSED
+}
+
+class "«enumeration»\nStatutDepannage" as StatutDepannage {
+    EN_ATTENTE
+    PLANIFIE
+    EN_COURS
+    RAPPORT_SOUMIS
+    RAPPORT_VALIDE
+    CLOTURE
+}
+
+' ─────────────────────────────────────────────────────────────────────────────
+' DISPOSITION 2 PAR 2 ALIGNÉE
+' ─────────────────────────────────────────────────────────────────────────────
+User -[hidden]right- Equipement
+Demande -[hidden]right- Depannage
+Equipe -[hidden]right- Planification
+StatutDemande -[hidden]right- StatutDepannage
+
+User -[hidden]down- Demande
+Equipement -[hidden]down- Depannage
+Demande -[hidden]down- Equipe
+Depannage -[hidden]down- Planification
+Equipe -[hidden]down- StatutDemande
+Planification -[hidden]down- StatutDepannage
+
+' ─────────────────────────────────────────────────────────────────────────────
+' ASSOCIATIONS MÉTIER CLAIRES SANS CROISEMENTS
+' ─────────────────────────────────────────────────────────────────────────────
+
+' Émission et traitement de la demande
+User "1" -down- "0..*" Demande : émettre >
+Demande "0..*" -- "1" Equipement : concerner >
+Demande "0..1" -right- "1" Depannage : déclencher >
+
+' Réparation et planification
+Depannage "0..*" -up- "1" Equipement : réparer >
+Depannage "0..1" -down- "0..*" Planification : programmer >
+
+' Prise en charge par l'équipe
+User "0..*" -down- "0..*" Equipe : composer >
+Equipe "0..1" -- "0..*" Depannage : prendre en charge >
+Equipe "0..1" -right- "0..*" Planification : mobiliser >
+
+@enduml

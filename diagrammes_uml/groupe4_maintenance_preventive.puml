@@ -1,0 +1,152 @@
+@startuml Groupe4_Maintenance_Preventive
+!theme plain
+hide circle
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam roundCorner 0
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam nodesep 80
+skinparam ranksep 60
+skinparam linetype ortho
+
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    BorderThickness 1
+    FontName Arial
+    FontSize 11
+    FontStyle bold
+    AttributeFontName Arial
+    AttributeFontSize 10
+    AttributeFontStyle plain
+}
+
+skinparam ArrowColor #000000
+skinparam ArrowThickness 1
+skinparam ArrowFontName Arial
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #000000
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 1 : Campagne de Maintenance & Énumération
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Maintenance {
+    +id : int
+    +numero_maintenance : string
+    +type_maintenance : string
+    +client_id : int
+    +base_id : int
+    +site_id : int
+    +description : text
+    +taches_prevues : text
+    +pieces_prevues : text
+    +date_debut_prevue : datetime
+    +date_fin_prevue : datetime
+    +duree_estimee_heures : decimal
+    +equipe_id : int
+    +technicien_id : int
+    +statut : string
+    +date_debut_reelle : datetime
+    +date_fin_reelle : datetime
+    +rapport_technicien : text
+    +nombre_equipements_prevus : int
+    +nombre_equipements_traites : int
+    +created_by_user_id : int
+    --
+    +creerCampagne() : void
+    +affecterEquipes() : void
+    +calculerAvancement() : float
+    +cloturerMaintenance() : void
+    +genererRapportFinal() : void
+}
+
+class "«enumeration»\nStatutMaintenance" as StatutMaintenance {
+    PLANIFIEE
+    CONFIRMEE_CLIENT
+    EN_COURS
+    TERMINEE
+    VALIDEE_CLIENT
+    ANNULEE
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 2 : Suivi Journalier & Équipes mobilisées
+' ═════════════════════════════════════════════════════════════════════════════
+
+class CompteRenduJournalier {
+    +id : int
+    +maintenance_id : int
+    +site_id : int
+    +equipe_id : int
+    +responsable_id : int
+    +date_rapport : date
+    +noms_intervenants : text
+    +activites_realisees : text
+    +nombre_equipements_traites : int
+    +anomalies_constatees : text
+    +difficultes_rencontrees : text
+    +materiel_utilise : text
+    +heure_fin : time
+    +nom_responsable : string
+    --
+    +saisirCompteRendu() : void
+    +mettreAJourAvancement() : void
+}
+
+class EquipeMaintenance {
+    +equipe_id : int
+    +maintenance_id : int
+    +role : string
+    +date_affectation : datetime
+    --
+    +definirRole() : void
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 3 : Référentiels d'exécution
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Site {
+    +id : int
+    +nom_site : string
+    --
+}
+
+class Equipe {
+    +id : int
+    +nom_equipe : string
+    --
+}
+
+' ─────────────────────────────────────────────────────────────────────────────
+' DISPOSITION 2 PAR 2 ALIGNÉE
+' ─────────────────────────────────────────────────────────────────────────────
+Maintenance -[hidden]right- StatutMaintenance
+CompteRenduJournalier -[hidden]right- EquipeMaintenance
+Site -[hidden]right- Equipe
+
+Maintenance -[hidden]down- CompteRenduJournalier
+StatutMaintenance -[hidden]down- EquipeMaintenance
+CompteRenduJournalier -[hidden]down- Site
+EquipeMaintenance -[hidden]down- Equipe
+
+' ─────────────────────────────────────────────────────────────────────────────
+' ASSOCIATIONS DIRECTES SANS CROISEMENTS
+' ─────────────────────────────────────────────────────────────────────────────
+
+' Colonne gauche : Maintenance et Suivi de chantier
+Maintenance "1" -down- "0..*" CompteRenduJournalier : faire l'objet de >
+CompteRenduJournalier "0..*" -down- "1" Site : localiser sur >
+
+' Colonne droite : Mobilisation des Équipes
+Maintenance "1" -down- "0..*" EquipeMaintenance : mobiliser >
+EquipeMaintenance "0..*" -down- "1" Equipe : affecter >
+
+' Lien horizontal de l'équipe rédactrice
+CompteRenduJournalier "0..*" -right- "1" Equipe : rédiger par >
+
+@enduml

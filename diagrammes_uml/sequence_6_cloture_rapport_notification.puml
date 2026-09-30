@@ -1,0 +1,102 @@
+@startuml Sequence_Cloture_Rapport_Notification
+!theme plain
+autonumber "<b>[00]</b>"
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam ParticipantBorderThickness 1
+skinparam LifeLineBorderThickness 1
+skinparam ArrowThickness 1
+skinparam SequenceLifeLineBorderColor #000000
+skinparam SequenceLifeLineBackgroundColor #F5F5F5
+skinparam ParticipantBorderColor #000000
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ActorBorderColor #000000
+skinparam ActorBackgroundColor #FFFFFF
+skinparam BoxBorderThickness 1
+skinparam BoxBorderColor #666666
+
+title DIAGRAMME DE SÉQUENCE : CLÔTURE D'INTERVENTION, GÉNÉRATION DU RAPPORT ET NOTIFICATION CLIENT
+
+actor "Technicien\n(Sur site)" as Tech
+participant "Interface Web / Mobile" as UI
+participant "DepannageController" as DepannageCtrl
+actor "Superviseur Client\n(Validation)" as SupClient
+participant "RapportController\n(Générateur PDF)" as RapportCtrl
+participant "Service Notification\n(NotificationController)" as NotifService
+database "Base de Données\n(MySQL)" as DB
+actor "Client / Demandeur" as Client
+
+== Étape 1 : Soumission du rapport de fin de travaux par le technicien ==
+
+Tech -> UI : 1. Saisit le constat, pièces remplacées et photos après intervention
+Tech -> UI : 2. Clique sur "Soumettre le rapport de fin"
+
+UI -> DepannageCtrl : 3. POST /depannages/{id}/rapport-complet
+activate DepannageCtrl
+DepannageCtrl -> DB : 4. UPDATE depannages SET statut='TRAVAUX_TERMINES', rapport_technique=?
+activate DB
+DB --> DepannageCtrl : 5. Confirmation mise à jour
+deactivate DB
+
+DepannageCtrl -> NotifService : 6. Alerte le Superviseur Client ("Rapport prêt pour validation")
+activate NotifService
+NotifService -> DB : 7. INSERT INTO notifications (...)
+activate DB
+DB --> NotifService : 8. Notif enregistrée
+deactivate DB
+NotifService --> DepannageCtrl : 9. Ok
+deactivate NotifService
+
+DepannageCtrl --> UI : 10. Message "Rapport soumis avec succès"
+deactivate DepannageCtrl
+
+== Étape 2 : Revue et clôture par le Superviseur Client ==
+
+SupClient -> UI : 11. Ouvre la fiche d'intervention et vérifie le rapport technique
+activate UI
+SupClient -> UI : 12. Clique sur "Valider et Clôturer l'intervention"
+
+UI -> DepannageCtrl : 13. POST /depannages/{id}/cloturer
+activate DepannageCtrl
+DepannageCtrl -> DB : 14. UPDATE depannages SET statut='CLOTURE', date_cloture=NOW()
+activate DB
+DB --> DepannageCtrl : 15. Dépannage clôturé
+deactivate DB
+
+== Étape 3 : Génération du rapport d'intervention (PDF) et Notification ==
+
+DepannageCtrl -> RapportCtrl : 16. genererRapportPDF(depannage_id)
+activate RapportCtrl
+RapportCtrl -> DB : 17. Récupère données intervention, client, pièces et photos
+activate DB
+DB --> RapportCtrl : 18. Données complètes
+deactivate DB
+
+RapportCtrl -> RapportCtrl : 19. Compilation PDF via vue Blade (DomPDF)
+RapportCtrl -> DB : 20. INSERT INTO rapports (depannage_id, chemin_pdf, date_generation)
+activate DB
+DB --> RapportCtrl : 21. Enregistrement rapport
+deactivate DB
+RapportCtrl --> DepannageCtrl : 22. Rapport PDF généré (URL de téléchargement)
+deactivate RapportCtrl
+
+DepannageCtrl -> NotifService : 23. notifierClientCloture(client_id, url_rapport)
+activate NotifService
+NotifService -> DB : 24. INSERT INTO notifications (destinataire=client, message="Intervention clôturée")
+activate DB
+DB --> NotifService : 25. Notification enregistrée
+deactivate DB
+NotifService --> DepannageCtrl : 26. Client notifié
+deactivate NotifService
+
+DepannageCtrl --> UI : 27. Confirmation "Intervention clôturée & Rapport transmis"
+deactivate DepannageCtrl
+UI --> SupClient : 28. Affichage du statut CLÔTURÉ avec bouton "Télécharger PDF"
+deactivate UI
+
+DB --> Client : 29. Réception email / notification in-app avec rapport joint
+@enduml

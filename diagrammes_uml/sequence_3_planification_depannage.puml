@@ -1,0 +1,84 @@
+@startuml Sequence_Planification_Depannage
+!theme plain
+autonumber "<b>[00]</b>"
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam ParticipantBorderThickness 1
+skinparam LifeLineBorderThickness 1
+skinparam ArrowThickness 1
+skinparam SequenceLifeLineBorderColor #000000
+skinparam SequenceLifeLineBackgroundColor #F5F5F5
+skinparam ParticipantBorderColor #000000
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ActorBorderColor #000000
+skinparam ActorBackgroundColor #FFFFFF
+skinparam BoxBorderThickness 1
+skinparam BoxBorderColor #666666
+
+title DIAGRAMME DE SÉQUENCE : TRAITEMENT, PLANIFICATION ET AFFECTATION D'UN DÉPANNAGE
+
+actor "Superviseur Soutarah\n/ Admin" as Superviseur
+participant "Interface Web\n(operations.createFromDemande)" as UI
+participant "DepannageController" as DepannageCtrl
+participant "PlanningController" as PlanningCtrl
+participant "Modèle Depannage\n(Eloquent)" as DepannageModel
+participant "Modèle Demande\n(Eloquent)" as DemandeModel
+database "Base de Données\n(MySQL)" as DB
+actor "Technicien\n(Chef d'équipe)" as Technicien
+
+Superviseur -> UI : 1. Consulte la demande en attente
+activate UI
+UI --> Superviseur : 2. Affiche détails panne et liste des équipes disponibles
+
+Superviseur -> UI : 3. Sélectionne équipe, date intervention & priorité
+Superviseur -> UI : 4. Valide l'affectation et la planification
+
+UI -> DepannageCtrl : 5. POST /operations/store-from-demande
+activate DepannageCtrl
+
+DepannageCtrl -> DepannageModel : 6. create(demande_id, equipe_id, statut='PLANIFIE')
+activate DepannageModel
+
+DepannageModel -> DB : 7. INSERT INTO depannages (...)
+activate DB
+DB --> DepannageModel : 8. ID dépannage créé
+deactivate DB
+DepannageModel --> DepannageCtrl : 9. Instance Dépannage
+deactivate DepannageModel
+
+DepannageCtrl -> PlanningCtrl : 10. planifierIntervention(depannage_id, date, equipe_id)
+activate PlanningCtrl
+
+PlanningCtrl -> DB : 11. INSERT INTO planifications (...)
+activate DB
+DB --> PlanningCtrl : 12. Confirmation planification
+deactivate DB
+PlanningCtrl --> DepannageCtrl : 13. Succès planification
+deactivate PlanningCtrl
+
+DepannageCtrl -> DemandeModel : 14. update(statut='PLANIFIEE')
+activate DemandeModel
+DemandeModel -> DB : 15. UPDATE demandes SET statut='PLANIFIEE' WHERE id=?
+activate DB
+DB --> DemandeModel : 16. Statut mis à jour
+deactivate DB
+DemandeModel --> DepannageCtrl : 17. Demande mise à jour
+deactivate DemandeModel
+
+DepannageCtrl -> DB : 18. INSERT INTO notifications (destinataire=technicien, "Nouvelle intervention")
+activate DB
+DB --> DepannageCtrl : 19. Notification créée
+deactivate DB
+
+DepannageCtrl --> UI : 20. Redirection succès ("Intervention planifiée avec succès")
+deactivate DepannageCtrl
+
+UI --> Superviseur : 21. Affichage du planning mis à jour
+
+DB --> Technicien : 22. Notification push / alerte sur tableau de bord mobile
+deactivate UI
+@enduml

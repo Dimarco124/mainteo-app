@@ -1,0 +1,154 @@
+@startuml Module3_Maintenance_Preventive
+!theme plain
+hide circle
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam roundCorner 0
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam nodesep 80
+skinparam ranksep 60
+skinparam linetype ortho
+
+skinparam class {
+    BackgroundColor #FFFFFF
+    BorderColor #000000
+    BorderThickness 1
+    FontName Arial
+    FontSize 11
+    FontStyle bold
+    AttributeFontName Arial
+    AttributeFontSize 10
+    AttributeFontStyle plain
+}
+
+skinparam ArrowColor #000000
+skinparam ArrowThickness 1
+skinparam ArrowFontName Arial
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #000000
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 1 : Responsable & Site d'Intervention
+' ═════════════════════════════════════════════════════════════════════════════
+
+class User {
+    +id : int
+    +nom : string
+    +prenom : string
+    +type_utilisateur : string
+    --
+    +planifierMaintenance() : void
+}
+
+class Site {
+    +id : int
+    +nom_site : string
+    +code_site : string
+    +ville : string
+    --
+    +listerEquipements() : array
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 2 : Campagne de Maintenance & Équipe Mobilisée
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Maintenance {
+    +id : int
+    +numero_maintenance : string
+    +type_maintenance : string
+    +description : text
+    +taches_prevues : text
+    +pieces_prevues : text
+    +date_debut_prevue : datetime
+    +date_fin_prevue : datetime
+    +duree_estimee_heures : decimal
+    +statut : string
+    +date_debut_reelle : datetime
+    +date_fin_reelle : datetime
+    +rapport_technicien : text
+    +nombre_equipements_prevus : int
+    +nombre_equipements_traites : int
+    --
+    +creerCampagne() : void
+    +affecterEquipes() : void
+    +calculerAvancement() : float
+    +cloturerMaintenance() : void
+    +genererRapportFinal() : void
+}
+
+class Equipe {
+    +id : int
+    +nom_equipe : string
+    +chef_equipe : int
+    --
+    +ajouterMembre() : void
+    +retirerMembre() : void
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 3 : Suivi Journalier de Chantier & Statuts
+' ═════════════════════════════════════════════════════════════════════════════
+
+class CompteRenduJournalier {
+    +id : int
+    +date_rapport : date
+    +noms_intervenants : text
+    +activites_realisees : text
+    +nombre_equipements_traites : int
+    +anomalies_constatees : text
+    +difficultes_rencontrees : text
+    +materiel_utilise : text
+    +heure_fin : time
+    +nom_responsable : string
+    --
+    +saisirCompteRendu() : void
+    +mettreAJourAvancement() : void
+    +signerFeuilleJournee() : void
+}
+
+class "«enumeration»\nStatutMaintenance" as StatutMaintenance {
+    PLANIFIEE
+    CONFIRMEE_CLIENT
+    EN_COURS
+    TERMINEE
+    VALIDEE_CLIENT
+    ANNULEE
+}
+
+' ─────────────────────────────────────────────────────────────────────────────
+' DISPOSITION 2 PAR 2 ALIGNÉE
+' ─────────────────────────────────────────────────────────────────────────────
+User -[hidden]right- Site
+Maintenance -[hidden]right- Equipe
+CompteRenduJournalier -[hidden]right- StatutMaintenance
+
+User -[hidden]down- Maintenance
+Site -[hidden]down- Equipe
+Maintenance -[hidden]down- CompteRenduJournalier
+Equipe -[hidden]down- StatutMaintenance
+
+' ─────────────────────────────────────────────────────────────────────────────
+' ASSOCIATIONS MÉTIER CLAIRES
+' ─────────────────────────────────────────────────────────────────────────────
+
+' Planification par le superviseur
+User "1" -down- "0..*" Maintenance : planifier >
+
+' Localisation de la maintenance
+Maintenance "0..*" -up- "1" Site : se dérouler sur >
+
+' Mobilisation des équipes sur la maintenance
+Maintenance "0..*" -right- "1..*" Equipe : mobiliser >
+
+' Suivi journalier par les comptes rendus
+Maintenance "1" -down- "0..*" CompteRenduJournalier : faire l'objet de >
+
+' Rédaction et validation du compte rendu
+CompteRenduJournalier "0..*" -- "1" Equipe : rédiger par >
+CompteRenduJournalier "0..*" -- "1" User : valider par (responsable) >
+
+@enduml

@@ -1,0 +1,142 @@
+@startuml Cas_Utilisation_Installations
+
+'=============================================================================
+'  MAINTEO — DIAGRAMME DE CAS D'UTILISATION : INSTALLATIONS
+'  Disposition en grille horizontale avec acteurs répartis autour
+'=============================================================================
+
+hide stereotype
+
+'------------------------------- Mise en forme -------------------------------
+skinparam backgroundColor  #FCFCFE
+skinparam shadowing        false
+skinparam defaultFontName  Helvetica
+skinparam defaultFontSize  12
+skinparam roundCorner      10
+skinparam nodesep          35
+skinparam ranksep          45
+skinparam padding          4
+skinparam actorStyle       awesome
+skinparam packageStyle     rectangle
+skinparam ArrowThickness   1.1
+skinparam ArrowFontSize    10
+skinparam ArrowFontColor   #6B7280
+
+skinparam title {
+  FontSize        22
+  FontStyle       bold
+  FontColor       #1B2A4A
+  BorderColor     transparent
+  BackgroundColor transparent
+}
+
+skinparam actor {
+  FontStyle       bold
+  FontSize        13
+  FontColor       #1B2A4A
+  BorderThickness 1.5
+  BorderColor<<adm>>  #2F4F8F
+  BorderColor<<sso>>  #0E7C6B
+  BorderColor<<tec>>  #B03A2E
+  BorderColor<<scl>>  #B26B00
+  BackgroundColor<<adm>> #D8E3F6
+  BackgroundColor<<sso>> #D2EDE6
+  BackgroundColor<<tec>> #F7DAD5
+  BackgroundColor<<scl>> #F7E5C9
+}
+
+skinparam usecase {
+  FontSize        11
+  FontColor       #2C3A4E
+  BorderThickness 1.2
+  BackgroundColor #FFFFFF
+  BorderColor     #2E8B74
+}
+
+skinparam rectangle {
+  FontStyle       bold
+  FontSize        13
+  BorderThickness 1.6
+  BorderStyle     dashed
+  BackgroundColor #F2F9F6
+  BorderColor     #2E8B74
+  FontColor       #226B59
+}
+
+title MAINTEO — Gestion des Installations d'Équipements
+
+'---------------------------------- Acteurs ----------------------------------
+' Côté Client (en haut à gauche)
+actor "Superviseur\nClient"      as SUP_CLIENT   <<scl>>
+
+' Équipe Soutarah (en haut à droite)
+actor "Superviseur\nSoutarah"    as SUP_SOUTARAH <<sso>>
+actor "Administrateur\nSoutarah" as ADMIN        <<adm>>
+
+' Terrain (en bas)
+actor "Technicien\nInstallateur" as TECHNICIEN   <<tec>>
+
+'============================ DOMAINE FONCTIONNEL ============================
+
+rectangle "GESTION DES INSTALLATIONS" {
+
+  ' --- LIGNE 1 : Demande, Planification et Pose ---
+  together {
+    usecase "Demander l'installation d'un équipement" as UC_DEMANDE_INST
+    usecase "Planifier la date et affecter l'équipe"  as UC_PLAN_INST
+    usecase "Poser et raccorder l'équipement sur site" as UC_REALISER_INST
+  }
+  UC_DEMANDE_INST -[hidden]right-> UC_PLAN_INST
+  UC_PLAN_INST -[hidden]right-> UC_REALISER_INST
+
+  ' --- LIGNE 2 : Contrôle, Rapport et Intégration ---
+  together {
+    usecase "Remplir la fiche fluide frigorigène"     as UC_FICHE_FROID_INST
+    usecase "Soumettre le rapport d'installation"      as UC_RAPPORT_INST
+    usecase "Enregistrer l'équipement dans le parc"    as UC_INTEGRER_PARC
+  }
+  UC_FICHE_FROID_INST -[hidden]right-> UC_RAPPORT_INST
+  UC_RAPPORT_INST -[hidden]right-> UC_INTEGRER_PARC
+
+  ' --- LIGNE 3 : Validation finale ---
+  usecase "Valider la conformité des travaux et clôturer" as UC_VALID_INST
+
+  ' Alignement vertical des rangées
+  UC_DEMANDE_INST -[hidden]down-> UC_FICHE_FROID_INST
+  UC_FICHE_FROID_INST -[hidden]down-> UC_VALID_INST
+
+}
+
+'============= ASSOCIATIONS — SUPERVISEUR CLIENT (Haut Gauche) ================
+SUP_CLIENT -[#B26B00]-> UC_DEMANDE_INST
+SUP_CLIENT -[#B26B00]-> UC_VALID_INST
+
+'============= ASSOCIATIONS — SUPERVISEUR SOUTARAH (Haut Droite) ==============
+SUP_SOUTARAH -[#0E7C6B]-> UC_PLAN_INST
+SUP_SOUTARAH -[#0E7C6B]-> UC_INTEGRER_PARC
+
+'============= ASSOCIATIONS — ADMINISTRATEUR (Droite) =========================
+ADMIN -[#2F4F8F]-> UC_PLAN_INST
+ADMIN -[#2F4F8F]-> UC_INTEGRER_PARC
+
+'============= ASSOCIATIONS — TECHNICIEN (Bas) ================================
+TECHNICIEN -[#B03A2E]-> UC_REALISER_INST
+TECHNICIEN -[#B03A2E]-> UC_FICHE_FROID_INST
+TECHNICIEN -[#B03A2E]-> UC_RAPPORT_INST
+
+'============================ RELATIONS UML ==================================
+UC_FICHE_FROID_INST .[#8C97A8].> UC_RAPPORT_INST  : <<extend>>
+UC_RAPPORT_INST     .[#8C97A8].> UC_INTEGRER_PARC : <<include>>
+UC_INTEGRER_PARC    .[#8C97A8].> UC_VALID_INST    : <<include>>
+
+'=================================== LÉGENDE ================================
+legend bottom right
+<b>Code couleur des acteurs</b>
+<color:#B26B00>▬▬</color>  Superviseur Client
+<color:#0E7C6B>▬▬</color>  Superviseur Soutarah
+<color:#2F4F8F>▬▬</color>  Administrateur Soutarah
+<color:#B03A2E>▬▬</color>  Technicien
+<color:#8C97A8>┈┈</color>  Relations «include» / «extend»
+endlegend
+
+@enduml

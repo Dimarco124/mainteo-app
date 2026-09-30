@@ -1,0 +1,179 @@
+@startuml Cas_Utilisation_Pilotage_Reporting
+
+'=============================================================================
+'  MAINTEO — DIAGRAMME DE CAS D'UTILISATION : PILOTAGE ET REPORTING
+'  Conforme au code réel (DashboardController, PlanningController,
+'  KPIPerformanceController, RapportController, CompteRenduJournalierController,
+'  NotificationController)
+'  Disposition : 3 par ligne, lecture stricte de gauche à droite, sans parenthèses
+'=============================================================================
+
+skinparam packageStyle rectangle
+hide stereotype
+
+'------------------------------- Mise en forme -------------------------------
+skinparam backgroundColor  #FCFCFE
+skinparam shadowing        false
+skinparam defaultFontName  Helvetica
+skinparam defaultFontSize  12
+skinparam roundCorner      10
+skinparam nodesep          35
+skinparam ranksep          45
+skinparam actorStyle       awesome
+skinparam ArrowThickness   1.1
+skinparam ArrowFontSize    10
+skinparam ArrowFontColor   #6B7280
+
+skinparam title {
+  FontSize        22
+  FontStyle       bold
+  FontColor       #1B2A4A
+  BorderColor     transparent
+  BackgroundColor transparent
+}
+
+skinparam actor {
+  FontStyle       bold
+  FontSize        13
+  FontColor       #1B2A4A
+  BorderThickness 1.5
+  BorderColor<<adm>>  #2F4F8F
+  BorderColor<<sso>>  #0E7C6B
+  BorderColor<<scl>>  #B26B00
+  BorderColor<<dem>>  #7D3C98
+  BorderColor<<tec>>  #B03A2E
+  BackgroundColor<<adm>> #D8E3F6
+  BackgroundColor<<sso>> #D2EDE6
+  BackgroundColor<<scl>> #F7E5C9
+  BackgroundColor<<dem>> #E8D9F2
+  BackgroundColor<<tec>> #F7DAD5
+}
+
+skinparam usecase {
+  FontSize        11
+  FontColor       #2C3A4E
+  BorderThickness 1.2
+  BackgroundColor #FFFFFF
+  BorderColor     #0E7C6B
+}
+
+skinparam rectangle {
+  FontStyle       bold
+  FontSize        13
+  BorderThickness 1.6
+  BorderStyle     dashed
+  BackgroundColor #F2F9F7
+  BorderColor     #0E7C6B
+  FontColor       #0A584C
+}
+
+title MAINTEO — Pilotage, Tableaux de bord et Reporting
+
+'---------------------------------- Acteurs ----------------------------------
+actor "Demandeur"              as DEMANDEUR    <<dem>>
+actor "Superviseur\nClient"    as SUP_CLIENT   <<scl>>
+actor "Technicien"             as TECHNICIEN   <<tec>>
+actor "Superviseur\nSoutarah"  as SUP_SOUTARAH <<sso>>
+actor "Administrateur\nSoutarah" as ADMIN      <<adm>>
+
+'============================ DOMAINE FONCTIONNEL ============================
+
+rectangle "PILOTAGE, TABLEAUX DE BORD ET REPORTING" {
+
+  ' --- LIGNE 1 : Supervision directe et Planning global ---
+  together {
+    usecase "Consulter le tableau de bord par rôle"    as UC1
+    usecase "Consulter le planning des interventions"  as UC2
+    usecase "Consulter les notifications en temps réel" as UC3
+  }
+  UC1 -[hidden]right-> UC2
+  UC2 -[hidden]right-> UC3
+
+  ' --- LIGNE 2 : Performance, Alertes et Suivi terrain ---
+  together {
+    usecase "Analyser les indicateurs de performance"  as UC4
+    usecase "Consulter les comptes rendus journaliers" as UC5
+    usecase "Suivre les demandes"                      as UC6
+  }
+  UC4 -[hidden]right-> UC5
+  UC5 -[hidden]right-> UC6
+
+  ' --- LIGNE 3 : Rapports d'intervention et Exports ---
+  together {
+    usecase "Consulter les rapports d'intervention"    as UC7
+    usecase "Consulter l'historique des interventions" as UC8
+    usecase "Exporter le planning des travaux en PDF"  as UC9
+  }
+  UC7 -[hidden]right-> UC8
+  UC8 -[hidden]right-> UC9
+
+  ' Alignement vertical strict des 3 colonnes (haut -> bas)
+  UC1 -[hidden]down-> UC4
+  UC4 -[hidden]down-> UC7
+
+  UC2 -[hidden]down-> UC5
+  UC5 -[hidden]down-> UC8
+
+  UC3 -[hidden]down-> UC6
+  UC6 -[hidden]down-> UC9
+
+}
+
+'============= ASSOCIATIONS — CLIENT ET TERRAIN (À GAUCHE) ====================
+DEMANDEUR -[#7D3C98]-> UC1
+DEMANDEUR -[#7D3C98]-> UC2
+DEMANDEUR -[#7D3C98]-> UC3
+DEMANDEUR -[#7D3C98]-> UC6
+DEMANDEUR -[#7D3C98]-> UC8
+
+SUP_CLIENT -[#B26B00]-> UC1
+SUP_CLIENT -[#B26B00]-> UC2
+SUP_CLIENT -[#B26B00]-> UC3
+SUP_CLIENT -[#B26B00]-> UC6
+SUP_CLIENT -[#B26B00]-> UC7
+SUP_CLIENT -[#B26B00]-> UC8
+
+TECHNICIEN -[#B03A2E]-> UC1
+TECHNICIEN -[#B03A2E]-> UC2
+TECHNICIEN -[#B03A2E]-> UC3
+TECHNICIEN -[#B03A2E]-> UC5
+TECHNICIEN -[#B03A2E]-> UC6
+TECHNICIEN -[#B03A2E]-> UC7
+TECHNICIEN -[#B03A2E]-> UC8
+
+'============= ASSOCIATIONS — SOUTARAH (À DROITE) ============================
+UC1 <-[#0E7C6B]- SUP_SOUTARAH
+UC2 <-[#0E7C6B]- SUP_SOUTARAH
+UC3 <-[#0E7C6B]- SUP_SOUTARAH
+UC4 <-[#0E7C6B]- SUP_SOUTARAH
+UC5 <-[#0E7C6B]- SUP_SOUTARAH
+UC6 <-[#0E7C6B]- SUP_SOUTARAH
+UC7 <-[#0E7C6B]- SUP_SOUTARAH
+UC8 <-[#0E7C6B]- SUP_SOUTARAH
+UC9 <-[#0E7C6B]- SUP_SOUTARAH
+
+UC1 <-[#2F4F8F]- ADMIN
+UC2 <-[#2F4F8F]- ADMIN
+UC3 <-[#2F4F8F]- ADMIN
+UC4 <-[#2F4F8F]- ADMIN
+UC5 <-[#2F4F8F]- ADMIN
+UC6 <-[#2F4F8F]- ADMIN
+UC7 <-[#2F4F8F]- ADMIN
+UC8 <-[#2F4F8F]- ADMIN
+UC9 <-[#2F4F8F]- ADMIN
+
+'============================ RELATIONS UML ==================================
+UC2 .[#8C97A8].> UC9 : <<extend>>
+
+'=================================== LÉGENDE ================================
+legend bottom right
+<b>Code couleur des acteurs</b>
+<color:#7D3C98>▬▬</color>  Demandeur (Client)
+<color:#B26B00>▬▬</color>  Superviseur Client
+<color:#B03A2E>▬▬</color>  Technicien
+<color:#0E7C6B>▬▬</color>  Superviseur Soutarah
+<color:#2F4F8F>▬▬</color>  Administrateur Soutarah
+<color:#8C97A8>┈┈</color>  Relations «extend»
+endlegend
+
+@enduml

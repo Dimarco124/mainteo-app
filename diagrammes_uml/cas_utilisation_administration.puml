@@ -1,0 +1,148 @@
+@startuml Cas_Utilisation_Administration
+
+'=============================================================================
+'  MAINTEO — DIAGRAMME DE CAS D'UTILISATION : ADMINISTRATION ET RÉFÉRENTIEL
+'  Conforme au code réel (ClientController, SiteController, EquipementController,
+'  UserController, EquipeController, AssignmentController, ImportController)
+'  Disposition : 3 par ligne, lecture stricte de gauche à droite, sans parenthèses
+'=============================================================================
+
+skinparam packageStyle rectangle
+hide stereotype
+
+'------------------------------- Mise en forme -------------------------------
+skinparam backgroundColor  #FCFCFE
+skinparam shadowing        false
+skinparam defaultFontName  Helvetica
+skinparam defaultFontSize  12
+skinparam roundCorner      10
+skinparam nodesep          35
+skinparam ranksep          45
+skinparam actorStyle       awesome
+skinparam ArrowThickness   1.1
+skinparam ArrowFontSize    10
+skinparam ArrowFontColor   #6B7280
+
+skinparam title {
+  FontSize        22
+  FontStyle       bold
+  FontColor       #1B2A4A
+  BorderColor     transparent
+  BackgroundColor transparent
+}
+
+skinparam actor {
+  FontStyle       bold
+  FontSize        13
+  FontColor       #1B2A4A
+  BorderThickness 1.5
+  BorderColor<<adm>>  #2F4F8F
+  BorderColor<<sso>>  #0E7C6B
+  BorderColor<<scl>>  #B26B00
+  BackgroundColor<<adm>> #D8E3F6
+  BackgroundColor<<sso>> #D2EDE6
+  BackgroundColor<<scl>> #F7E5C9
+}
+
+skinparam usecase {
+  FontSize        11
+  FontColor       #2C3A4E
+  BorderThickness 1.2
+  BackgroundColor #FFFFFF
+  BorderColor     #2F4F8F
+}
+
+skinparam rectangle {
+  FontStyle       bold
+  FontSize        13
+  BorderThickness 1.6
+  BorderStyle     dashed
+  BackgroundColor #F4F7FC
+  BorderColor     #2F4F8F
+  FontColor       #1D3557
+}
+
+title MAINTEO — Administration et Gestion du Référentiel
+
+'---------------------------------- Acteurs ----------------------------------
+actor "Superviseur\nClient"      as SUP_CLIENT   <<scl>>
+actor "Superviseur\nSoutarah"    as SUP_SOUTARAH <<sso>>
+actor "Administrateur\nSoutarah" as ADMIN        <<adm>>
+
+'============================ DOMAINE FONCTIONNEL ============================
+
+rectangle "ADMINISTRATION ET GESTION DU RÉFÉRENTIEL" {
+
+  ' --- LIGNE 1 : Clients, Sites et Importations initiales ---
+  together {
+    usecase "Gérer les clients et les bases"           as UC1
+    usecase "Gérer les sites et emplacements"          as UC2
+    usecase "Importer les référentiels par Excel"      as UC3
+  }
+  UC1 -[hidden]right-> UC2
+  UC2 -[hidden]right-> UC3
+
+  ' --- LIGNE 2 : Équipements et Équipes techniques ---
+  together {
+    usecase "Enregistrer un nouvel équipement"         as UC4
+    usecase "Compléter la fiche technique d'équipement" as UC5
+    usecase "Constituer les équipes et désigner les chefs" as UC6
+  }
+  UC4 -[hidden]right-> UC5
+  UC5 -[hidden]right-> UC6
+
+  ' --- LIGNE 3 : Utilisateurs et Affectations de périmètre ---
+  together {
+    usecase "Gérer les comptes utilisateurs"           as UC7
+    usecase "Affecter les superviseurs Soutarah"       as UC8
+    usecase "Affecter les sites aux demandeurs"        as UC9
+  }
+  UC7 -[hidden]right-> UC8
+  UC8 -[hidden]right-> UC9
+
+  ' Alignement vertical strict des 3 colonnes (haut -> bas)
+  UC1 -[hidden]down-> UC4
+  UC4 -[hidden]down-> UC7
+
+  UC2 -[hidden]down-> UC5
+  UC5 -[hidden]down-> UC8
+
+  UC3 -[hidden]down-> UC6
+  UC6 -[hidden]down-> UC9
+
+}
+
+'============= ASSOCIATIONS — SUPERVISEUR CLIENT (À GAUCHE) ===================
+SUP_CLIENT -[#B26B00]-> UC2
+SUP_CLIENT -[#B26B00]-> UC4
+SUP_CLIENT -[#B26B00]-> UC9
+
+'============= ASSOCIATIONS — SUPERVISEUR SOUTARAH (AU MILIEU) ================
+UC2 <-[#0E7C6B]- SUP_SOUTARAH
+UC5 <-[#0E7C6B]- SUP_SOUTARAH
+UC6 <-[#0E7C6B]- SUP_SOUTARAH
+
+'============= ASSOCIATIONS — ADMINISTRATEUR SOUTARAH (À DROITE) ==============
+UC1 <-[#2F4F8F]- ADMIN
+UC2 <-[#2F4F8F]- ADMIN
+UC3 <-[#2F4F8F]- ADMIN
+UC4 <-[#2F4F8F]- ADMIN
+UC5 <-[#2F4F8F]- ADMIN
+UC6 <-[#2F4F8F]- ADMIN
+UC7 <-[#2F4F8F]- ADMIN
+UC8 <-[#2F4F8F]- ADMIN
+
+'============================ RELATIONS UML ==================================
+UC4 .[#8C97A8].> UC5 : <<extend>>
+UC1 .[#8C97A8].> UC3 : <<extend>>
+
+'=================================== LÉGENDE ================================
+legend bottom right
+<b>Code couleur des acteurs</b>
+<color:#B26B00>▬▬</color>  Superviseur Client
+<color:#0E7C6B>▬▬</color>  Superviseur Soutarah
+<color:#2F4F8F>▬▬</color>  Administrateur Soutarah
+<color:#8C97A8>┈┈</color>  Relations «extend»
+endlegend
+
+@enduml

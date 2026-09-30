@@ -1,0 +1,82 @@
+@startuml Sequence_Creation_Demande_Depannage
+!theme plain
+autonumber "<b>[00]</b>"
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam ParticipantBorderThickness 1
+skinparam LifeLineBorderThickness 1
+skinparam ArrowThickness 1
+skinparam SequenceLifeLineBorderColor #000000
+skinparam SequenceLifeLineBackgroundColor #F5F5F5
+skinparam ParticipantBorderColor #000000
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ActorBorderColor #000000
+skinparam ActorBackgroundColor #FFFFFF
+skinparam BoxBorderThickness 1
+skinparam BoxBorderColor #666666
+
+title DIAGRAMME DE SÉQUENCE : CRÉATION D'UNE DEMANDE DE DÉPANNAGE (FLUX CURATIF)
+
+actor "Demandeur\n(Client / Site)" as Demandeur
+participant "Interface Web\n(demandes.create)" as UI
+participant "DemandeController" as DemandeCtrl
+participant "Service Fichiers\n(Storage)" as Storage
+participant "Modèle Demande\n(Eloquent)" as DemandeModel
+database "Base de Données\n(MySQL)" as DB
+participant "Service Notification\n(NotificationController)" as Notif
+
+Demandeur -> UI : 1. Accède au formulaire de signalement
+activate UI
+UI --> Demandeur : 2. Affiche le formulaire (sélection site/équipement)
+
+Demandeur -> UI : 3. Saisit description, urgence et ajoute photos
+Demandeur -> UI : 4. Clique sur "Soumettre la demande"
+
+UI -> DemandeCtrl : 5. POST /demandes (payload multipart/form-data)
+activate DemandeCtrl
+
+DemandeCtrl -> DemandeCtrl : 6. Valide les données ($request->validate)
+
+alt #FFFFFF Données invalides (champs manquants)
+    DemandeCtrl --> UI : 7a. Erreurs de validation (HTTP 422)
+    UI --> Demandeur : 8a. Surligne les champs en erreur
+else #FFFFFF Données valides
+    opt #FFFFFF Présence de photos jointes
+        DemandeCtrl -> Storage : 7b. Stocke les images (/storage/demandes/photos)
+        activate Storage
+        Storage --> DemandeCtrl : 8b. Chemins d'accès des photos
+        deactivate Storage
+    end
+
+    DemandeCtrl -> DemandeModel : 9. create(data + statut='EN_ATTENTE')
+    activate DemandeModel
+    
+    DemandeModel -> DB : 10. INSERT INTO demandes (...)
+    activate DB
+    DB --> DemandeModel : 11. ID généré (ex: DEM-2026-0042)
+    deactivate DB
+    
+    DemandeModel --> DemandeCtrl : 12. Instance Demande créée
+    deactivate DemandeModel
+
+    DemandeCtrl -> Notif : 13. Notifie le Superviseur Soutarah & l'Admin
+    activate Notif
+    Notif -> DB : 14. INSERT INTO notifications (...)
+    activate DB
+    DB --> Notif : 15. Confirmation notification
+    deactivate DB
+    Notif --> DemandeCtrl : 16. Notification enregistrée
+    deactivate Notif
+
+    DemandeCtrl --> UI : 17. Redirection avec message succès ("Demande transmise")
+    deactivate DemandeCtrl
+
+    UI --> Demandeur : 18. Affichage confirmation avec numéro de suivi
+end
+
+deactivate UI
+@enduml

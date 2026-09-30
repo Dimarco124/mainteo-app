@@ -1,0 +1,91 @@
+@startuml Sequence_Maintenance_Preventive_Suivi
+!theme plain
+autonumber "<b>[00]</b>"
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam ParticipantBorderThickness 1
+skinparam LifeLineBorderThickness 1
+skinparam ArrowThickness 1
+skinparam SequenceLifeLineBorderColor #000000
+skinparam SequenceLifeLineBackgroundColor #F5F5F5
+skinparam ParticipantBorderColor #000000
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ActorBorderColor #000000
+skinparam ActorBackgroundColor #FFFFFF
+skinparam BoxBorderThickness 1
+skinparam BoxBorderColor #666666
+
+title DIAGRAMME DE SÉQUENCE : PLANIFICATION ET SUIVI JOURNALIER DE MAINTENANCE PRÉVENTIVE
+
+actor "Superviseur Soutarah" as Superviseur
+participant "Interface Web / Planning" as UI_Web
+participant "MaintenanceController" as MaintCtrl
+actor "Technicien\n(Sur chantier)" as Technicien
+participant "Interface Mobile\n(PWA Technicien)" as UI_Mobile
+participant "CompteRenduJournalierController" as CRCtrl
+participant "Modèle Maintenance\n/ CompteRendu" as Model
+database "Base de Données\n(MySQL)" as DB
+
+== Phase 1 : Planification de la campagne préventive ==
+
+Superviseur -> UI_Web : 1. Saisit contrat, site, dates prévues & affecte les équipes
+activate UI_Web
+UI_Web -> MaintCtrl : 2. POST /maintenances (données campagne)
+activate MaintCtrl
+
+MaintCtrl -> Model : 3. create(statut='PLANIFIEE')
+activate Model
+Model -> DB : 4. INSERT INTO maintenances (...)
+activate DB
+DB --> Model : 5. ID maintenance créé
+deactivate DB
+Model --> MaintCtrl : 6. Confirmation enregistrement
+deactivate Model
+
+MaintCtrl --> UI_Web : 7. Redirection avec succès
+deactivate MaintCtrl
+UI_Web --> Superviseur : 8. Affichage sur le calendrier général
+deactivate UI_Web
+
+== Phase 2 : Démarrage du chantier et saisie journalière ==
+
+Technicien -> UI_Mobile : 9. Accède à sa fiche chantier
+activate UI_Mobile
+Technicien -> UI_Mobile : 10. Clique sur "Démarrer le chantier"
+
+UI_Mobile -> MaintCtrl : 11. POST /maintenances/{id}/demarrer
+activate MaintCtrl
+MaintCtrl -> DB : 12. UPDATE maintenances SET statut='EN_COURS' WHERE id=?
+activate DB
+DB --> MaintCtrl : 13. Statut mis à jour
+deactivate DB
+MaintCtrl --> UI_Mobile : 14. Statut 'EN_COURS' validé
+deactivate MaintCtrl
+
+loop Chaque jour d'intervention sur site
+    Technicien -> UI_Mobile : 15. Saisit heures travaillées, % avancement & travaux effectués
+    Technicien -> UI_Mobile : 16. Soumet le compte-rendu journalier (CRJ)
+
+    UI_Mobile -> CRCtrl : 17. POST /maintenances/{id}/comptes-rendus
+    activate CRCtrl
+    CRCtrl -> DB : 18. INSERT INTO comptes_rendus_journaliers (...)
+    activate DB
+    DB --> CRCtrl : 19. CRJ sauvegardé
+    deactivate DB
+
+    CRCtrl -> DB : 20. UPDATE maintenances SET pourcentage_avancement=? WHERE id=?
+    activate DB
+    DB --> CRCtrl : 21. Avancement global recalculé
+    deactivate DB
+
+    CRCtrl --> UI_Mobile : 22. Confirmation enregistrement CRJ
+    deactivate CRCtrl
+    UI_Mobile --> Technicien : 23. Message "Compte-rendu du jour validé"
+end
+
+deactivate UI_Mobile
+@enduml

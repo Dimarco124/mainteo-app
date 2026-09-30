@@ -1,0 +1,218 @@
+@startuml Module1_Referentiel_Equipements
+
+'=============================================================================
+'  MAINTEO — DIAGRAMME DE CLASSES : RÉFÉRENTIEL ET ÉQUIPEMENTS (MODULE 1)
+'  Classes métier : Client, BaseSite, Site, ZoneSite, Equipement, FicheFroid,
+'  Installation, Assignment
+'=============================================================================
+
+hide circle
+skinparam packageStyle rectangle
+skinparam backgroundColor #FCFCFE
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+skinparam defaultFontColor #1B2A4A
+skinparam roundCorner 8
+skinparam classAttributeIconSize 0
+skinparam nodesep 65
+skinparam ranksep 50
+skinparam linetype ortho
+
+skinparam title {
+  FontSize 18
+  FontStyle bold
+  FontColor #1B2A4A
+  BorderColor transparent
+  BackgroundColor transparent
+}
+
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #2F4F8F
+  BorderThickness 1.3
+  HeaderBackgroundColor #EBF2FA
+  FontName Helvetica
+  FontSize 11
+  FontStyle bold
+  FontColor #1B2A4A
+  AttributeFontName Helvetica
+  AttributeFontSize 10
+  AttributeFontColor #2C3E50
+}
+
+skinparam ArrowColor #4B5563
+skinparam ArrowThickness 1.2
+skinparam ArrowFontName Helvetica
+skinparam ArrowFontSize 10
+skinparam ArrowFontColor #374151
+
+title MAINTEO — Module 1 : Référentiel, Parc d'Équipements et Affectations
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 1 : Client, Base et Affectation Superviseur
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Client {
+    +id : int
+    +code : string
+    +nom : string
+    +telephone : string
+    +mail : string
+    +adresse : string
+    +ville : string
+    +pays : string
+    --
+    +creerBase() : void
+    +creerSite() : void
+    +listerEquipements() : array
+}
+
+class BaseSite {
+    +id : int
+    +nom_base : string
+    +code_base : string
+    --
+    +ajouterSite() : void
+    +listerSites() : array
+}
+
+class Assignment {
+    +id : int
+    +superviseur_soutarah_id : int
+    +base_id : int
+    +client_id : int
+    --
+    +assignerBase() : void
+    +assignerClient() : void
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 2 : Site & Zone (Emplacement précis)
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Site {
+    +id : int
+    +nom_site : string
+    +code_site : string
+    +adresse : string
+    +ville : string
+    +telephone : string
+    +observations : text
+    --
+    +ajouterZone() : void
+    +ajouterEquipement() : void
+}
+
+class ZoneSite {
+    +id : int
+    +nom_zone : string
+    +code_zone : string
+    +observations : text
+    +est_vip : boolean
+    --
+    +affecterEquipement() : void
+    +estZoneVip() : boolean
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 3 : Parc d'Équipements & Fiches Frigorigènes
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Equipement {
+    +id : int
+    +equipement_code : string
+    +equipement_numero : string
+    +equipement_nom : string
+    +marque : string
+    +type : string
+    +emplacement : string
+    +reference : string
+    +puissance : string
+    +refrigerant : string
+    +mois_installation : string
+    +annee_installation : int
+    +etat : string
+    --
+    +mettreAJourEtat() : void
+    +consulterHistorique() : array
+}
+
+class FicheFroid {
+    +id : int
+    +freon : string
+    +etat_filtres : string
+    +dismatic : string
+    +dpn : string
+    +support : string
+    +test : string
+    +etat_general : string
+    +observations : text
+    +date_saisie : datetime
+    --
+    +enregistrerFiche() : void
+    +genererRapport() : void
+}
+
+' ═════════════════════════════════════════════════════════════════════════════
+' LIGNE 4 : Installation d'Équipement Neuf
+' ═════════════════════════════════════════════════════════════════════════════
+
+class Installation {
+    +id : int
+    +type_equipement : string
+    +marque : string
+    +modele : string
+    +numero_serie : string
+    +code_identification : string
+    +date_prevue : datetime
+    +date_installation : datetime
+    +remarque : text
+    +statut : string
+    +rapport : text
+    +approuve_client : boolean
+    --
+    +planifierInstallation() : void
+    +validerInstallation() : void
+    +genererPVReception() : void
+}
+
+' ─────────────────────────────────────────────────────────────────────────────
+' DISPOSITION DES BLOCS
+' ─────────────────────────────────────────────────────────────────────────────
+Client -[hidden]right- BaseSite
+BaseSite -[hidden]right- Assignment
+
+Client -[hidden]down- Site
+BaseSite -[hidden]down- ZoneSite
+
+Site -[hidden]right- ZoneSite
+Site -[hidden]down- Equipement
+ZoneSite -[hidden]down- FicheFroid
+
+Equipement -[hidden]right- FicheFroid
+Equipement -[hidden]down- Installation
+
+' ─────────────────────────────────────────────────────────────────────────────
+' ASSOCIATIONS ET CARDINALITÉS MÉTIER VÉRIFIÉES
+' ─────────────────────────────────────────────────────────────────────────────
+
+' Structure organisationnelle du client
+Client "1" -right- "0..*" BaseSite : détenir >
+Client "1" -- "0..*" Site : posséder directement >
+BaseSite "0..1" -down- "0..*" Site : regrouper >
+
+' Affectation de périmètre superviseur Soutarah
+Assignment "0..*" -left- "0..1" BaseSite : affecter à >
+Assignment "0..*" -- "0..1" Client : affecter à >
+
+' Découpage géographique du site
+Site "1" -right- "0..*" ZoneSite : subdiviser en >
+Site "1" -down- "0..*" Equipement : abriter >
+ZoneSite "0..1" -down- "0..*" Equipement : situer >
+
+' Suivi technique et installation
+Equipement "1" -right- "0..*" FicheFroid : faire l'objet de >
+Equipement "0..1" -down- "0..1" Installation : être installé par >
+
+@enduml

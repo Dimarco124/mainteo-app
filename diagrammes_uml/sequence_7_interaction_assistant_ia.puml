@@ -1,0 +1,98 @@
+@startuml Sequence_Interaction_Assistant_IA
+!theme plain
+autonumber "<b>[00]</b>"
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam ParticipantBorderThickness 1
+skinparam LifeLineBorderThickness 1
+skinparam ArrowThickness 1
+skinparam SequenceLifeLineBorderColor #000000
+skinparam SequenceLifeLineBackgroundColor #F5F5F5
+skinparam ParticipantBorderColor #000000 
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ActorBorderColor #000000
+skinparam ActorBackgroundColor #FFFFFF
+skinparam BoxBorderThickness 1
+skinparam BoxBorderColor #666666
+
+title DIAGRAMME DE SÉQUENCE : INTERACTION AVEC L'ASSISTANT IA GROQ & AIDE AU DIAGNOSTIC
+
+actor "Utilisateur Connecté\n(Technicien / Superviseur)" as User
+participant "Interface Web / Chat\n(ai.index)" as UI
+participant "AiAssistantController\n(Contrôleur IA)" as AiCtrl
+participant "Modèles Eloquent\n(AiConversation / AiMessage)" as AiModel
+participant "GroqService\n(Orchestrateur IA & RAG)" as AiService
+database "Base de Données\n(MySQL MAINTEO)" as DB
+participant "Plateforme Groq\n(API LLM 120B / Llama 3)" as GroqAPI
+
+== Phase 1 : Saisie et enregistrement de la question ==
+
+User -> UI : 1. Saisit une requête ("Quelle est la cause fréquente de surchauffe sur le compresseur C-102 ?")
+activate UI
+User -> UI : 2. Clique sur "Envoyer"
+
+UI -> AiCtrl : 3. POST /ai/messages { conversation_id, message }
+activate AiCtrl
+
+AiCtrl -> DB : 4. Vérifie / Crée la discussion (AiConversation::firstOrCreate)
+activate DB
+DB --> AiCtrl : 5. ID discussion active
+deactivate DB
+
+AiCtrl -> AiModel : 6. create(conversation_id, user_id, role='user', content)
+activate AiModel
+AiModel -> DB : 7. INSERT INTO ai_messages (...)
+activate DB
+DB --> AiModel : 8. Message utilisateur persisté
+deactivate DB
+AiModel --> AiCtrl : 9. Instance AiMessage
+deactivate AiModel
+
+== Phase 2 : Contextualisation Métier (RAG) & Inférence Groq ==
+
+AiCtrl -> AiService : 10. genererReponse(User, message, historique_messages)
+activate AiService
+
+AiService -> AiService : 11. construireContexteUtilisateur(User) [Vérification rôle RBAC & périmètre]
+
+AiService -> DB : 12. SELECT équipements, pannes récentes, équipes actives
+activate DB
+DB --> AiService : 13. Données GMAO temps réel
+deactivate DB
+
+AiService -> AiService : 14. Injecte le contexte réel dans l'instruction système
+
+alt Appel direct API Groq (Ultra-rapide, Llama / 120B)
+    AiService -> GroqAPI : 15. POST /openai/v1/chat/completions (Prompt système + Contexte + Question)
+    activate GroqAPI
+    GroqAPI --> AiService : 16. Réponse textuelle et diagnostic technique générés
+    deactivate GroqAPI
+else Secours local (Fallback hors-ligne ou quota)
+    AiService -> AiService : 17. genererReponseSecoursLocal()
+end
+
+AiService --> AiCtrl : 18. Texte final de la réponse IA
+deactivate AiService
+
+== Phase 3 : Persistance de la réponse et restitution utilisateur ==
+
+AiCtrl -> AiModel : 19. create(conversation_id, user_id, role='assistant', content)
+activate AiModel
+AiModel -> DB : 20. INSERT INTO ai_messages (role='assistant', content=...)
+activate DB
+DB --> AiModel : 21. Réponse sauvegardée en base
+deactivate DB
+AiModel --> AiCtrl : 22. Instance AiMessage enregistrée
+deactivate AiModel
+
+AiCtrl --> UI : 23. Retour JSON { success: true, ai_message, conversation_id }
+deactivate AiCtrl
+
+UI --> User : 24. Affiche instantanément la réponse formatée et les recommandations
+deactivate UI
+
+@enduml

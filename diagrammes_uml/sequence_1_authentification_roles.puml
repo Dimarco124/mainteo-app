@@ -1,0 +1,72 @@
+@startuml Sequence_Authentification_Roles
+!theme plain
+autonumber "<b>[00]</b>"
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam defaultFontColor #000000
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam ParticipantBorderThickness 1
+skinparam LifeLineBorderThickness 1
+skinparam ArrowThickness 1
+skinparam SequenceLifeLineBorderColor #000000
+skinparam SequenceLifeLineBackgroundColor #F5F5F5
+skinparam ParticipantBorderColor #000000
+skinparam ParticipantBackgroundColor #FFFFFF
+skinparam ActorBorderColor #000000
+skinparam ActorBackgroundColor #FFFFFF
+skinparam BoxBorderThickness 1
+skinparam BoxBorderColor #666666
+
+title DIAGRAMME DE SÉQUENCE : AUTHENTIFICATION ET REDIRECTION PAR RÔLE
+
+actor "Utilisateur" as User
+participant "Interface Web\n(auth.login)" as UI
+participant "LoginController\n(Auth)" as AuthCtrl
+participant "Modèle User\n(Eloquent)" as UserModel
+database "Base de Données\n(MySQL)" as DB
+
+User -> UI : 1. Saisit email et mot de passe
+activate UI
+
+UI -> AuthCtrl : 2. POST /login (credentials)
+activate AuthCtrl
+
+AuthCtrl -> UserModel : 3. Recherche utilisateur par email
+activate UserModel
+
+UserModel -> DB : 4. SELECT * FROM utilisateurs WHERE email = ?
+activate DB
+DB --> UserModel : 5. Données utilisateur (dont mot de passe hashé & role)
+deactivate DB
+
+UserModel --> AuthCtrl : 6. Instance User
+deactivate UserModel
+
+AuthCtrl -> AuthCtrl : 7. Vérifie mot de passe (Hash::check)
+
+alt #FFFFFF Échec d'authentification (identifiants invalides)
+    AuthCtrl --> UI : 8a. Redirection arrière avec erreur ("Identifiants incorrects")
+    UI --> User : 9a. Affichage du message d'erreur
+else #FFFFFF Succès d'authentification
+    AuthCtrl -> AuthCtrl : 8b. Auth::login(user) & régénération session
+    
+    AuthCtrl -> UI : 9b. Redirection vers /dashboard
+    deactivate AuthCtrl
+    
+    UI -> UI : 10. Aiguillage selon user.type_utilisateur
+    
+    alt #FFFFFF role == 'admin'
+        UI --> User : 11a. Redirection vers /admin/dashboard
+    else #FFFFFF role == 'demandeur'
+        UI --> User : 11b. Redirection vers /demandeur/dashboard
+    else #FFFFFF role == 'technicien'
+        UI --> User : 11c. Redirection vers /technicien/dashboard (ou /mobile)
+    else #FFFFFF role == 'superviseur_client' ou 'superviseur_soutarah'
+        UI --> User : 11d. Redirection vers /superviseur/dashboard
+    end
+end
+
+deactivate UI
+@enduml

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Installation PWA - Mainteo</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .status-box {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #cbd5e1;
+            background: #f8fafc;
+        }
+        .status-ok {
+            border-left-color: #059669;
+            background: #ecfdf5;
+        }
+        .status-error {
+            border-left-color: #dc2626;
+            background: #fef2f2;
+        }
+        .btn {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        h1 {
+            color: #0f172a;
+        }
+        h2 {
+            color: #059669;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test Diagnostic PWA - Mainteo</h1>
+    
+    <div class="status-box">
+        <h2>📊 État de la PWA</h2>
+        <div id="status-container"></div>
+    </div>
+
+    <div class="status-box">
+        <h2>🎬 Actions</h2>
+        <button class="btn" onclick="testInstall()">🚀 Tester Installation</button>
+        <button class="btn" onclick="checkServiceWorker()">🔄 Vérifier Service Worker</button>
+        <button class="btn" onclick="checkManifest()">📄 Vérifier Manifest</button>
+        <button class="btn" onclick="location.reload()">🔃 Recharger la page</button>
+    </div>
+
+    <div class="status-box">
+        <h2>📝 Console Logs</h2>
+        <div id="console-logs" style="background: #0f172a; color: #ecfdf5; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;"></div>
+    </div>
+
+    <script>
+        let deferredPrompt = null;
+        const statusContainer = document.getElementById('status-container');
+        const consoleLogsDiv = document.getElementById('console-logs');
+
+        // Override console.log pour afficher dans la page
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const logEntry = document.createElement('div');
+            logEntry.textContent = new Date().toLocaleTimeString() + ' - ' + args.join(' ');
+            consoleLogsDiv.appendChild(logEntry);
+            consoleLogsDiv.scrollTop = consoleLogsDiv.scrollHeight;
+        };
+
+        function addStatus(message, isOk) {
+            const div = document.createElement('div');
+            div.className = `status-item ${isOk ? 'status-ok' : 'status-error'}`;
+            div.textContent = (isOk ? '✅ ' : '❌ ') + message;
+            statusContainer.appendChild(div);
+        }
+
+        // Vérifications au chargement
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('=== DIAGNOSTIC PWA MAINTEO ===');
+            
+            // 1. HTTPS
+            const isHTTPS = window.location.protocol === 'https:';
+            addStatus('HTTPS: ' + (isHTTPS ? 'Activé' : 'Désactivé'), isHTTPS);
+            console.log('HTTPS:', isHTTPS);
+
+            // 2. Service Worker
+            const hasSW = 'serviceWorker' in navigator;
+            addStatus('Service Worker API: ' + (hasSW ? 'Disponible' : 'Non disponible'), hasSW);
+            console.log('Service Worker API:', hasSW);
+
+            // 3. Manifest
+            const manifestLink = document.querySelector('link[rel="manifest"]');
+            addStatus('Manifest: ' + (manifestLink ? 'Présent' : 'Absent'), !!manifestLink);
+            console.log('Manifest:', manifestLink ? manifestLink.href : 'Non trouvé');
+
+            // 4. Mode Standalone
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+            addStatus('Mode Standalone: ' + (isStandalone ? 'Oui (déjà installé)' : 'Non'), !isStandalone);
+            console.log('Mode Standalone:', isStandalone);
+
+            // 5. Navigateur
+            const userAgent = navigator.userAgent;
+            const browser = getBrowserName();
+            addStatus('Navigateur: ' + browser, true);
+            console.log('User Agent:', userAgent);
+            console.log('Navigateur détecté:', browser);
+
+            // 6. beforeinstallprompt support
+            addStatus('En attente de beforeinstallprompt...', true);
+        });
+
+        // Capturer beforeinstallprompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('✅ beforeinstallprompt déclenché !');
+            e.preventDefault();
+            deferredPrompt = e;
+            addStatus('beforeinstallprompt: Reçu ! Installation possible', true);
+        });
+
+        // Détection installation
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ App installée avec succès !');
+            addStatus('Installation: Succès !', true);
+        });
+
+        // Fonction test installation
+        async function testInstall() {
+            console.log('--- TEST INSTALLATION ---');
+            console.log('deferredPrompt disponible:', !!deferredPrompt);
+
+            if (!deferredPrompt) {
+                alert('⚠️ Le prompt d\'installation n\'est pas disponible.\n\nPossibilités:\n1. L\'app est déjà installée\n2. Le navigateur ne supporte pas l\'installation\n3. Le Service Worker n\'est pas encore enregistré\n4. Vous n\'êtes pas en HTTPS');
+                return;
+            }
+
+            try {
+                console.log('Affichage du prompt...');
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log('Résultat:', outcome);
+                
+                if (outcome === 'accepted') {
+                    addStatus('Installation: Acceptée par l\'utilisateur', true);
+                } else {
+                    addStatus('Installation: Refusée par l\'utilisateur', false);
+                }
+                
+                deferredPrompt = null;
+            } catch (error) {
+                console.error('Erreur:', error);
+                addStatus('Installation: Erreur - ' + error.message, false);
+            }
+        }
+
+        // Vérifier Service Worker
+        async function checkServiceWorker() {
+            console.log('--- VÉRIFICATION SERVICE WORKER ---');
+            
+            if (!('serviceWorker' in navigator)) {
+                alert('❌ Service Worker non supporté');
+                return;
+            }
+
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    console.log('✅ Service Worker enregistré');
+                    console.log('Scope:', registration.scope);
+                    console.log('État:', registration.active ? 'Actif' : 'Inactif');
+                    addStatus('Service Worker: Enregistré et ' + (registration.active ? 'actif' : 'inactif'), !!registration.active);
+                    
+                    // Essayer de réenregistrer
+                    const newReg = await navigator.serviceWorker.register('/sw.js');
+                    console.log('Service Worker réenregistré');
+                } else {
+                    console.log('❌ Service Worker non enregistré');
+                    addStatus('Service Worker: Non enregistré', false);
+                    
+                    // Tenter l'enregistrement
+                    try {
+                        const reg = await navigator.serviceWorker.register('/sw.js');
+                        console.log('✅ Service Worker enregistré avec succès');
+                        addStatus('Service Worker: Enregistré avec succès !', true);
+                    } catch (err) {
+                        console.error('Erreur enregistrement SW:', err);
+                        addStatus('Service Worker: Erreur - ' + err.message, false);
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                addStatus('Service Worker: Erreur - ' + error.message, false);
+            }
+        }
+
+        // Vérifier Manifest
+        async function checkManifest() {
+            console.log('--- VÉRIFICATION MANIFEST ---');
+            
+            try {
+                const response = await fetch('/manifest.json');
+                if (response.ok) {
+                    const manifest = await response.json();
+                    console.log('✅ Manifest chargé:', manifest);
+                    addStatus('Manifest: Chargé avec succès', true);
+                    console.log('Name:', manifest.name);
+                    console.log('Short name:', manifest.short_name);
+                    console.log('Icons:', manifest.icons.length);
+                } else {
+                    console.error('❌ Manifest non trouvé (404)');
+                    addStatus('Manifest: Erreur 404', false);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                addStatus('Manifest: Erreur - ' + error.message, false);
+            }
+        }
+
+        // Détecter le navigateur
+        function getBrowserName() {
+            const ua = navigator.userAgent;
+            if (ua.includes('Chrome') && !ua.includes('Edg')) return 'Chrome';
+            if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
+            if (ua.includes('Firefox')) return 'Firefox';
+            if (ua.includes('Edg')) return 'Edge';
+            return 'Autre: ' + ua.substring(0, 50);
+        }
+
+        console.log('Page de diagnostic chargée');
+    </script>
+</body>
+</html>

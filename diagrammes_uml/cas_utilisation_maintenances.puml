@@ -1,0 +1,155 @@
+@startuml Cas_Utilisation_Maintenances
+
+'=============================================================================
+'  MAINTEO — DIAGRAMME DE CAS D'UTILISATION : MAINTENANCE PRÉVENTIVE
+'  Disposition en grille horizontale (3 par ligne) avec acteurs répartis autour
+'=============================================================================
+
+hide stereotype
+
+'------------------------------- Mise en forme -------------------------------
+skinparam backgroundColor  #FCFCFE
+skinparam shadowing        false
+skinparam defaultFontName  Helvetica
+skinparam defaultFontSize  12
+skinparam roundCorner      10
+skinparam nodesep          35
+skinparam ranksep          45
+skinparam padding          4
+skinparam actorStyle       awesome
+skinparam packageStyle     rectangle
+skinparam ArrowThickness   1.1
+skinparam ArrowFontSize    10
+skinparam ArrowFontColor   #6B7280
+
+skinparam title {
+  FontSize        22
+  FontStyle       bold
+  FontColor       #1B2A4A
+  BorderColor     transparent
+  BackgroundColor transparent
+}
+
+skinparam actor {
+  FontStyle       bold
+  FontSize        13
+  FontColor       #1B2A4A
+  BorderThickness 1.5
+  BorderColor<<adm>>  #2F4F8F
+  BorderColor<<sso>>  #0E7C6B
+  BorderColor<<tec>>  #B03A2E
+  BorderColor<<scl>>  #B26B00
+  BackgroundColor<<adm>> #D8E3F6
+  BackgroundColor<<sso>> #D2EDE6
+  BackgroundColor<<tec>> #F7DAD5
+  BackgroundColor<<scl>> #F7E5C9
+}
+
+skinparam usecase {
+  FontSize        11
+  FontColor       #2C3A4E
+  BorderThickness 1.2
+  BackgroundColor #FFFFFF
+  BorderColor     #4A6FA5
+}
+
+skinparam rectangle {
+  FontStyle       bold
+  FontSize        13
+  BorderThickness 1.6
+  BorderStyle     dashed
+  BackgroundColor #F2F5FA
+  BorderColor     #4A6FA5
+  FontColor       #33527D
+}
+
+title MAINTEO — Gestion de la Maintenance Préventive
+
+'---------------------------------- Acteurs ----------------------------------
+' En haut à gauche
+actor "Superviseur\nSoutarah"    as SUP_SOUTARAH <<sso>>
+actor "Administrateur\nSoutarah" as ADMIN        <<adm>>
+
+' En haut à droite
+actor "Superviseur\nClient"      as SUP_CLIENT   <<scl>>
+
+' En bas
+actor "Chef d'équipe\n/ Technicien" as CHEF_TECH <<tec>>
+
+'============================ DOMAINE FONCTIONNEL ============================
+
+rectangle "GESTION DE LA MAINTENANCE PRÉVENTIVE" {
+
+  ' --- LIGNE 1 : Planification ---
+  together {
+    usecase "Programmer la campagne de maintenance" as UC_PLAN_CAMPAGNE
+    usecase "Affecter l'équipe technique"            as UC_AFFECT_EQUIPES
+    usecase "Confirmer la date de passage"           as UC_CONFIRM_RECEPTION
+  }
+  UC_PLAN_CAMPAGNE -[hidden]right-> UC_AFFECT_EQUIPES
+  UC_AFFECT_EQUIPES -[hidden]right-> UC_CONFIRM_RECEPTION
+
+  ' --- LIGNE 2 : Suivi du chantier ---
+  together {
+    usecase "Démarrer le chantier sur site"          as UC_DEMARRER
+    usecase "Remplir le compte rendu journalier"     as UC_CR_JOUR
+    usecase "Suivre le pourcentage d'avancement"     as UC_SUIVRE_AVANCEMENT
+  }
+  UC_DEMARRER -[hidden]right-> UC_CR_JOUR
+  UC_CR_JOUR -[hidden]right-> UC_SUIVRE_AVANCEMENT
+
+  ' --- LIGNE 3 : Fin et clôture ---
+  together {
+    usecase "Soumettre le rapport final de chantier" as UC_RAPPORT_FINAL
+    usecase "Valider le rapport technique par Soutarah" as UC_VALID_SOUTARAH_MAINT
+    usecase "Valider la clôture définitive des travaux" as UC_VALID_CLIENT_MAINT
+  }
+  UC_RAPPORT_FINAL -[hidden]right-> UC_VALID_SOUTARAH_MAINT
+  UC_VALID_SOUTARAH_MAINT -[hidden]right-> UC_VALID_CLIENT_MAINT
+
+  ' Alignement vertical des rangées
+  UC_PLAN_CAMPAGNE -[hidden]down-> UC_DEMARRER
+  UC_DEMARRER -[hidden]down-> UC_RAPPORT_FINAL
+
+}
+
+'============= ASSOCIATIONS — SUPERVISEUR SOUTARAH (Gauche / Haut) ===========
+SUP_SOUTARAH -[#0E7C6B]-> UC_PLAN_CAMPAGNE
+SUP_SOUTARAH -[#0E7C6B]-> UC_AFFECT_EQUIPES
+SUP_SOUTARAH -[#0E7C6B]-> UC_SUIVRE_AVANCEMENT
+SUP_SOUTARAH -[#0E7C6B]-> UC_VALID_SOUTARAH_MAINT
+
+'============= ASSOCIATIONS — ADMINISTRATEUR (Gauche) ========================
+ADMIN -[#2F4F8F]-> UC_PLAN_CAMPAGNE
+ADMIN -[#2F4F8F]-> UC_AFFECT_EQUIPES
+ADMIN -[#2F4F8F]-> UC_SUIVRE_AVANCEMENT
+ADMIN -[#2F4F8F]-> UC_VALID_SOUTARAH_MAINT
+
+'============= ASSOCIATIONS — SUPERVISEUR CLIENT (Droite) ====================
+SUP_CLIENT -[#B26B00]-> UC_CONFIRM_RECEPTION
+SUP_CLIENT -[#B26B00]-> UC_SUIVRE_AVANCEMENT
+SUP_CLIENT -[#B26B00]-> UC_VALID_CLIENT_MAINT
+
+'============= ASSOCIATIONS — CHEF D'ÉQUIPE (Bas) ============================
+CHEF_TECH -[#B03A2E]-> UC_DEMARRER
+CHEF_TECH -[#B03A2E]-> UC_CR_JOUR
+CHEF_TECH -[#B03A2E]-> UC_RAPPORT_FINAL
+CHEF_TECH -[#B03A2E]-> UC_SUIVRE_AVANCEMENT
+
+'============================ RELATIONS UML ==================================
+UC_PLAN_CAMPAGNE        .[#8C97A8].> UC_AFFECT_EQUIPES      : <<include>>
+UC_CR_JOUR              .[#8C97A8].> UC_SUIVRE_AVANCEMENT   : <<include>>
+UC_RAPPORT_FINAL        .[#8C97A8].> UC_VALID_SOUTARAH_MAINT: <<include>>
+UC_VALID_SOUTARAH_MAINT .[#8C97A8].> UC_VALID_CLIENT_MAINT : <<include>>
+
+'=================================== LÉGENDE ================================
+legend bottom right
+<b>Code couleur des acteurs</b>
+<color:#0E7C6B>▬▬</color>  Superviseur Soutarah
+<color:#2F4F8F>▬▬</color>  Administrateur Soutarah
+<color:#B26B00>▬▬</color>  Superviseur Client
+<color:#B03A2E>▬▬</color>  Chef d'équipe / Technicien
+<color:#8C97A8>┈┈</color>  Relations «include»
+endlegend
+
+@enduml
